@@ -1,0 +1,117 @@
+Assignement 1 - Household Power Consumption Analysis
+-----------------------------------------------------
+
+### References
+  * [Date Time classins in R](https://www.stat.berkeley.edu/classes/s133/dates.html)
+
+### Load libraries
+```{r}
+library(lubridate)
+```
+
+### Load dataset
+```{r s0, cache=TRUE}
+df = read.csv("./data/household_power_consumption.txt", sep=";")
+```
+
+
+### Prepare missing values
+```{r s1, cache=TRUE, dependson='s0'}
+## size of dataset
+dim(df)
+## find classes of columns
+sapply(df[1,], class)
+## Replace '?' symbol for missing values with NA
+df[df == '?'] <- NA
+```
+
+### Prepare column classes
+```{r s2, cache=TRUE, dependson='s1'}
+## Converting factors to numeric:  as.numeric(levels(fac))[fac]
+
+for (i in 3:8) {
+  df[,i]=as.numeric(levels(df[,i])[df[,i]])
+}
+sapply(df[1,], class)
+head(df)
+summary(df)
+```
+
+There are two POSIX date/time classes, which differ in the way that the values are stored internally. The POSIXct class stores date/time values as the number of seconds since January 1, 1970, while the POSIXlt class stores them as a list with elements for second, minute, hour, day, month, and year, among others. Unless you need the list nature of the POSIXlt class, the POSIXct class is the usual choice for storing dates in R. 
+
+### Prepare date and time columns
+```{r s3, cache=TRUE, dependson='s2'}
+## set the class of date column to date
+df[,1] <- as.Date(df[,1], '%d/%m/%Y') 
+df$datetime <- strptime(paste(df[,1], df[,2]), '%Y-%m-%d %H:%M:%S')
+sapply(df[1,], class)
+head(df)
+summary(df)
+df.na = subset(df, df$datetime==NA)
+```
+
+
+### Extract subset for analysis
+```{r s4, cache=TRUE, dependson='s3'}
+df1 = subset(df, df$Date=='2007-02-01' | df$Date=='2007-02-02')
+head(df1)
+dim(df1)
+summary(df1)
+```
+
+
+### Disply NA values 
+```{r s5, cache=TRUE, dependson='s4'}
+head(df.na)
+```
+
+
+
+### Prepare plot1
+```{r s6, cache=TRUE, dependson='s4'}
+#png(filename='plot1.png', width=480, height=480, unit='px', pointsize=12,  
+#    bg='white', res=NA, restoreConsole=TRUE)
+hist(df1$Global_active_power, col='red', main='Global Active Power', xlab='Global Active Power (kilowatts)')
+#dev.off()
+```
+
+### Prepare plot2
+```{r s7, cache=TRUE, dependson='s4'}
+#png(filename='plot2.png', width=480, height=480, unit='px', pointsize=12, 
+# bg='white', res=NA, restoreConsole=TRUE)
+plot(df1$datetime, df1$Global_active_power, main='', type="l", xlab='', ylab='Global Active Power (kilowatts)')
+#dev.off()
+```
+
+### Prepare plot3
+```{r s8, cache=TRUE, dependson='s4'}
+#png(filename='plot3.png', width=480, height=480, unit='px', pointsize=12, 
+# bg='white', res=NA, restoreConsole=TRUE)
+plot(df1$datetime, df1$Sub_metering_1, main='', type="n", xlab='', ylab='Energy sub metering')
+lines(df1$datetime, df1$Sub_metering_1, main='', type="l", col='black')
+lines(df1$datetime, df1$Sub_metering_2, main='', type="l", col='red')
+lines(df1$datetime, df1$Sub_metering_3, main='', type="l", col='blue')
+legend('topright', col = c('black', 'red', 'blue'), legend=c('Sub_metering_1','Sub_metering_2','Sub_metering_3'), lty=c(1,1,1))
+#dev.off()
+```
+
+
+### Prepare plot4
+```{r s9, cache=TRUE, dependson='s4'}
+#png(filename='plot4.png', width=480, height=480, unit='px', pointsize=12,
+# bg='white', res=NA, restoreConsole=TRUE)
+par(mfrow=c(2,2))
+with(df1, {
+plot(datetime, Global_active_power, main='', type="l", xlab='', ylab='Global Active Power')
+plot(datetime, Voltage, main='', type="l", ylab='Voltage')
+plot(datetime, Sub_metering_1, main='', type="n", xlab='', ylab='Energy sub metering')
+lines(df1$datetime, df1$Sub_metering_1, main='', type="l", col='black')
+lines(df1$datetime, df1$Sub_metering_2, main='', type="l", col='red')
+lines(df1$datetime, df1$Sub_metering_3, main='', type="l", col='blue')
+legend('topright', col = c('black', 'red', 'blue'), legend=c('Sub_metering_1','Sub_metering_2','Sub_metering_3'), lty=c(1,1,1))
+plot(datetime, Global_reactive_power, main='', type="l")
+})
+#dev.off()
+```
+
+
